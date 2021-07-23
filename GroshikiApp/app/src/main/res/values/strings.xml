@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">GroshikiApp</string>
+
+    <!--Login/Register Activities-->
+    <string name="name_hint">имя</string>
+    <string name="password_hint">пароль</string>
+    <string name="confrim_password_hint">подтверждение пароля</string>
+    <string name="email_hint">email</string>
+    <string name="login">войти</string>
+    <string name="register">зарегистрироваться</string>
+
+
+</resources>

@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "665797222135",
+    "firebase_url": "https://groshikiapp-default-rtdb.europe-west1.firebasedatabase.app",
+    "project_id": "groshikiapp",
+    "storage_bucket": "groshikiapp.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:665797222135:android:932f45684e7695d53d7df2",
+        "android_client_info": {
+          "package_name": "com.example.groshikiapp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "665797222135-vcqgi1asq800o5q0m5vh7b4b82vo2bgl.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA1BoXPhsA0ZnInOfnPSeACuWRTR6-Fd6Y"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "665797222135-vcqgi1asq800o5q0m5vh7b4b82vo2bgl.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
