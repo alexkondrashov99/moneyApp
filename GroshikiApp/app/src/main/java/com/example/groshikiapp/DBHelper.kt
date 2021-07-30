@@ -5,10 +5,11 @@ import android.content.Context
 import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
-import androidx.appcompat.app.AppCompatActivity
 import com.example.groshikiapp.Model.*
 import java.util.*
 import kotlin.collections.ArrayList
+
+
 
 
 //_________USER___________________________//
@@ -20,12 +21,7 @@ const val USER_EMAIL = "user_email"
 const val TABLE_PROFILE = "table_profile"
 const val PROFILE_ID = "profile_id"
 const val PROFILE_NAME = "profile_name"
-//const val PROFILE_PW_Hash= "profile_pw_hash"
-
-//_________PSEUDONYM___________________________//
-const val TABLE_PSEUDONYM = "table_pseudonym"
-const val PSEUDONYM_ID = "pseudonym_id"
-const val PSEUDONYM_NAME = "pseudonym_name"
+const val PROFILE_PW_HASH= "profile_pw_hash"
 
 //_________Category___________________________//
 const val TABLE_CATEGORY = "table_category"
@@ -34,6 +30,7 @@ const val CATEGORY_NAME = "category_name"
 const val CATEGORY_ICON = "category_icon"
 const val CATEGORY_IS_Spend = "category_is_spend"
 const val CATEGORY_IS_HIDE = "category_is_hide"
+const val CATEGORY_IS_IMMORTAL = "category_is_immortal"
 
 //_________POCKET___________________________//
 const val TABLE_POCKET = "table_pocket"
@@ -48,6 +45,8 @@ const val POCKET_ICON = "pocket_icon"
 //_________USER-PROFILE___________________________//
 const val TABLE_USER_PROFILE = "table_user_profile"
 const val USER_PROFILE_ID = "user_profile_id"
+const val USER_PROFILE_NAME = "user_profile_name"
+const val USER_PROFILE_IS_HIDE = "user_profile_is_hide"
 
 //_________TRANSACTION___________________________//
 const val TABLE_TRANSACTION = "table_transaction"
@@ -57,25 +56,20 @@ const val TRANSACTION_TIME_UTC = "transaction_time_utc"
 const val TRANSACTION_DESCRIPTION = "transaction_description"
 //const val TRANSACTION_IS_SPEND = "transaction_is_spend"
 
-//---------------------------------------------//
-const val CREATE_TABLE_USER =
-    "CREATE TABLE "+TABLE_USER+" ( "+
-            USER_ID +" TEXT primary key ," +
-            USER_EMAIL +" TEXT )"
-
-const val CREATE_TABLE_PSEUDONYM =
-    "CREATE TABLE "+TABLE_PSEUDONYM+" ( "+
-            PSEUDONYM_ID +" TEXT primary key ," +
+const val CREATE_TABLE_USER_PROFILE =
+    "CREATE TABLE "+ TABLE_USER_PROFILE+" ( "+
+            USER_PROFILE_ID +" TEXT primary key ," +
             PROFILE_ID +" TEXT," +
             USER_ID +" TEXT," +
-            PSEUDONYM_NAME +" TEXT  )"
+            USER_PROFILE_IS_HIDE +" INT," +
+            USER_PROFILE_NAME +" TEXT  )"
 
 
 const val CREATE_TABLE_PROFILE =
     "CREATE TABLE "+TABLE_PROFILE+" ( "+
             PROFILE_ID +" TEXT primary key ," +
-            PROFILE_NAME +" TEXT  )"
-//PROFILE_PW_Hash +" INT )"
+            PROFILE_NAME +" TEXT,"+
+            PROFILE_PW_HASH +" INT )"
 
 const val CREATE_TABLE_CATEGORY =
     "CREATE TABLE "+ TABLE_CATEGORY+" ( "+
@@ -106,7 +100,7 @@ const val CREATE_TABLE_TRANSACTION =
             TRANSACTION_TIME_UTC +" TEXT ," +
             CATEGORY_ID +" TEXT ," +
             TRANSACTION_DESCRIPTION +" TEXT )"
-           // TRANSACTION_IS_SPEND +" INT
+// TRANSACTION_IS_SPEND +" INT
 
 //const val CLEAR_TABLE_TRANSACTION =  "DELETE FROM " + TABLE_TRANSACTION
 const val LOG_TAG = "DATABASE"
@@ -114,21 +108,15 @@ const val LOG_TAG = "DATABASE"
 
 
 
-interface DatabaseDisplayer {
-    fun onDatabaseError(error:String)
-    fun getParentContext():Context
-}
 
 
 
+class DBHelper(context:Context): SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION) {
 
-class DBHelper(activity: DatabaseDisplayer): SQLiteOpenHelper(activity.getParentContext(), DATABASE_NAME, null, DATABASE_VERSION) {
-
-    val databaseDisplayer:DatabaseDisplayer = activity
     override fun onCreate(db: SQLiteDatabase) {
         db.execSQL(CREATE_TABLE_PROFILE)
-        db.execSQL(CREATE_TABLE_USER)
-        db.execSQL(CREATE_TABLE_PSEUDONYM)
+        //db.execSQL(CREATE_TABLE_USER)
+        db.execSQL(CREATE_TABLE_USER_PROFILE)
         db.execSQL(CREATE_TABLE_CATEGORY)
         db.execSQL(CREATE_TABLE_POCKET)
         db.execSQL(CREATE_TABLE_TRANSACTION)
@@ -148,63 +136,61 @@ class DBHelper(activity: DatabaseDisplayer): SQLiteOpenHelper(activity.getParent
         db.close()
     }
 
-//    fun load (){
-//        getDataList<Pseudonym>("asda",{ c -> Pseudonym(c) })
-//    }
+
 
 
     //Generic GET functions for all Database objects
-    public fun <T> getDataList(table:String, construcor:(c:Cursor) -> T, condition: String = ""):ArrayList<T>{
+    public fun <T> getDataList(table:String, constructor:(c:Cursor) -> T, condition: String = ""):ArrayList<T>{
         val db = writableDatabase
         val dataList = ArrayList<T>()
         val c: Cursor = db.rawQuery("SELECT * FROM $table $condition",null)
         if(c.moveToFirst())
             do {
-                val data = construcor(c)
+                dataList.add(constructor(c))
             } while (c.moveToNext())
         db.close()
         return dataList
     }
-    public fun <T> getDataList(table:String, construcor:(c:Cursor) -> T, condition: String = "", db:SQLiteDatabase):ArrayList<T>{
+    public fun <T> getDataList(table:String, constructor:(c:Cursor) -> T, condition: String = "", db:SQLiteDatabase):ArrayList<T>{
         val dataList = ArrayList<T>()
         val c: Cursor = db.rawQuery("SELECT * FROM $table $condition",null)
         if(c.moveToFirst())
             do {
-                val data = construcor(c)
+                dataList.add(constructor(c))
             } while (c.moveToNext())
         return dataList
     }
-    public fun <T> getDataByCondition(table:String, condition: String, construcor:(c:Cursor) -> T):T?{
+    public fun <T> getDataByCondition(table:String, condition: String, constructor:(c:Cursor) -> T):T?{
         val db = writableDatabase
         var data:T? = null
         val c: Cursor = db.rawQuery("SELECT * FROM $table $condition",null)
         if(c.moveToFirst())
-                data = construcor(c)
+            data = constructor(c)
 
         db.close()
         return data
     }
-    public fun <T> getDataByCondition(table:String, condition: String, construcor:(c:Cursor) -> T, db: SQLiteDatabase):T?{
+    public fun <T> getDataByCondition(table:String, condition: String, constructor:(c:Cursor) -> T, db: SQLiteDatabase):T?{
         var data:T? = null
         val c: Cursor = db.rawQuery("SELECT * FROM $table $condition",null)
         if(c.moveToFirst())
-            data = construcor(c)
+            data = constructor(c)
 
         return data
     }
 
 
     //_________USER___________________________//
-    public fun createUser(user: User){
-        val db = writableDatabase
-        val values = ContentValues().apply {
-            put(USER_ID,user.id)
-            put(USER_EMAIL,user.email)
-        }
-        db.insert(TABLE_USER, null, values);
-
-        db.close()
-    }
+//    public fun createUser(user: User){
+//        val db = writableDatabase
+//        val values = ContentValues().apply {
+//            put(USER_ID,user.id)
+//            put(USER_EMAIL,user.email)
+//        }
+//        db.insert(TABLE_USER, null, values);
+//
+//        db.close()
+//    }
 
     //_________PROFILE___________________________//
     public fun createProfile(profile: Profile){
@@ -212,45 +198,25 @@ class DBHelper(activity: DatabaseDisplayer): SQLiteOpenHelper(activity.getParent
         val values = ContentValues().apply {
             put(PROFILE_ID,profile.id)
             put(PROFILE_NAME,profile.name)
+            put(PROFILE_PW_HASH,profile.pwHash)
         }
-        db.insert(TABLE_PROFILE, null, values);
+        val c = db.rawQuery("SELECT * FROM $TABLE_PROFILE WHERE $PROFILE_ID = '${profile.id}'",null)
+        if(c.count == 0)
+            db.insert(TABLE_PROFILE, null, values);
         db.close()
     }
-    public fun removeProfile(){
-
-    }
-
-    //_________PSEUDONYM___________________________//
-    public fun createPseudonym(pseudonym: Pseudonym){
+    public fun deleteProfile(profileId:String){
         val db = writableDatabase
-        val values = ContentValues().apply {
-            put(PSEUDONYM_ID,pseudonym.id)
-            put(PROFILE_ID,pseudonym.profileId)
-            put(USER_ID,pseudonym.userId)
-            put(PSEUDONYM_NAME,pseudonym.name)
-
+        val pocketList = getDataList(TABLE_POCKET,{Pocket.withCursor(it)},"WHERE $PROFILE_ID = '$profileId'",db)
+        pocketList.forEach{
+            deletePocket(it,db)
         }
-        db.insert(TABLE_PSEUDONYM, null, values);
+        db.execSQL("DELETE FROM $TABLE_CATEGORY WHERE $PROFILE_ID = '$profileId'")
+        db.execSQL("DELETE FROM $TABLE_USER_PROFILE WHERE $PROFILE_ID = '$profileId'")
+        db.execSQL("DELETE FROM $TABLE_PROFILE WHERE $PROFILE_ID = '${profileId}'")
         db.close()
     }
-    public fun createPseudonym(pseudonym: Pseudonym,db: SQLiteDatabase){
-        val values = ContentValues().apply {
-            put(PSEUDONYM_ID,pseudonym.id)
-            put(PROFILE_ID,pseudonym.profileId)
-            put(USER_ID,pseudonym.userId)
-            put(PSEUDONYM_NAME,pseudonym.name)
 
-        }
-        db.insert(TABLE_PSEUDONYM, null, values);
-    }
-    public fun updatePseudonym(pseudonym: Pseudonym){
-        val db = writableDatabase
-        val values = ContentValues().apply {
-            put(PSEUDONYM_NAME,pseudonym.name)
-        }
-        db.update(TABLE_PSEUDONYM, values, PSEUDONYM_ID + " = ?", arrayOf(pseudonym.id));
-        db.close()
-    }
 
     //_________Category___________________________//
     public fun createCategory(category:Category){
@@ -279,7 +245,7 @@ class DBHelper(activity: DatabaseDisplayer): SQLiteOpenHelper(activity.getParent
     }
     public fun deleteCategory(categoryId: String){
         val db = writableDatabase
-        val transactionList = getDataList(TABLE_TRANSACTION,{Transaction(it)},"WHERE $CATEGORY_ID = '$categoryId'")
+        val transactionList = getDataList(TABLE_TRANSACTION,{Transaction.withCursor(it)},"WHERE $CATEGORY_ID = '$categoryId'")
 
         transactionList.forEach(){
             deleteTransaction(it,db)
@@ -301,7 +267,7 @@ class DBHelper(activity: DatabaseDisplayer): SQLiteOpenHelper(activity.getParent
     //_________TRANSACTION___________________________//
     public fun createTransaction(transaction:Transaction){
         val db = writableDatabase
-        val pocket = getDataByCondition<Pocket>(TABLE_POCKET, "WHERE $POCKET_ID = '${transaction.pocketId}'",{Pocket(it)},db)
+        val pocket = getDataByCondition<Pocket>(TABLE_POCKET, "WHERE $POCKET_ID = '${transaction.pocketId}'",{Pocket.withCursor(it)},db)
 
         pocket?.let{
             pocket.balance += transaction.sum
@@ -323,7 +289,7 @@ class DBHelper(activity: DatabaseDisplayer): SQLiteOpenHelper(activity.getParent
     }
     public fun deleteTransaction(transaction:Transaction){
         val db = writableDatabase
-        val pocket = getDataByCondition<Pocket>(TABLE_POCKET, "WHERE $POCKET_ID = '${transaction.pocketId}'",{Pocket(it)},db)
+        val pocket = getDataByCondition<Pocket>(TABLE_POCKET, "WHERE $POCKET_ID = '${transaction.pocketId}'",{Pocket.withCursor(it)},db)
 
         pocket?.let{
             pocket.balance -= transaction.sum
@@ -334,7 +300,7 @@ class DBHelper(activity: DatabaseDisplayer): SQLiteOpenHelper(activity.getParent
         db.close()
     }
     public fun deleteTransaction(transaction:Transaction,db: SQLiteDatabase){
-        val pocket = getDataByCondition<Pocket>(TABLE_POCKET, "WHERE $POCKET_ID = '${transaction.pocketId}'",{Pocket(it)},db)
+        val pocket = getDataByCondition<Pocket>(TABLE_POCKET, "WHERE $POCKET_ID = '${transaction.pocketId}'",{Pocket.withCursor(it)},db)
 
         pocket?.let{
             pocket.balance -= transaction.sum
@@ -345,8 +311,8 @@ class DBHelper(activity: DatabaseDisplayer): SQLiteOpenHelper(activity.getParent
     }
     public fun updateTransaction(transaction:Transaction){
         val db = writableDatabase
-        val pocket = getDataByCondition<Pocket>(TABLE_POCKET, "WHERE $POCKET_ID = '${transaction.pocketId}'",{Pocket(it)},db)
-        val oldTransaction:Transaction? = null//get
+        val pocket = getDataByCondition<Pocket>(TABLE_POCKET, "WHERE $POCKET_ID = '${transaction.pocketId}'",{Pocket.withCursor(it)},db)
+        val oldTransaction:Transaction? = getDataByCondition<Transaction>(TABLE_TRANSACTION, "WHERE $TRANSACTION_ID = '${transaction.id}'",{Transaction.withCursor(it)},db)
         oldTransaction?.let {
             if(oldTransaction.sum != transaction.sum)
                 pocket?.let{
@@ -386,14 +352,13 @@ class DBHelper(activity: DatabaseDisplayer): SQLiteOpenHelper(activity.getParent
     }
     public fun deletePocket(pocket: Pocket){
         val db = writableDatabase
-        val transactionList = getDataList(TABLE_TRANSACTION,{Transaction(it)},"WHERE $POCKET_ID = '${pocket.id}'")
-
-        transactionList.forEach(){
-            deleteTransaction(it,db)
-        }
-
+        db.execSQL("DELETE FROM $TABLE_TRANSACTION WHERE $POCKET_ID = '${pocket.id}'")
         db.execSQL("DELETE FROM $TABLE_POCKET WHERE $POCKET_ID = '${pocket.id}'")
         db.close()
+    }
+    public fun deletePocket(pocket: Pocket, db:SQLiteDatabase){
+        db.execSQL("DELETE FROM $TABLE_TRANSACTION WHERE $POCKET_ID = '${pocket.id}'")
+        db.execSQL("DELETE FROM $TABLE_POCKET WHERE $POCKET_ID = '${pocket.id}'")
     }
     public fun updatePocket(pocket: Pocket){
         val db = writableDatabase
@@ -429,22 +394,43 @@ class DBHelper(activity: DatabaseDisplayer): SQLiteOpenHelper(activity.getParent
 
 
     //_________USER-PROFILE___________________________//
-    public fun bindUserProfile(bindingId:String, userId:String, profileId:String){
+    public fun getUserProfile(userId:String,profileId:String):UserProfile?{
+       val userProfile =  getDataByCondition(TABLE_USER_PROFILE,"WHERE $USER_ID = '$userId' AND $PROFILE_ID = '$profileId'",{UserProfile.withCursor(it)})
+       return userProfile
+    }
+
+    public fun updateUserProfile(userProfile: UserProfile){
         val db = writableDatabase
         val values = ContentValues().apply {
-            put(USER_PROFILE_ID,bindingId)
-            put(USER_ID,userId)
-            put(USER_EMAIL,profileId)
+            put(USER_PROFILE_NAME,userProfile.userName)
+            put(USER_PROFILE_IS_HIDE,if(userProfile.hide) 1 else 0)
         }
-        db.insert(TABLE_USER_PROFILE, null, values);
-
+        db.update(TABLE_USER_PROFILE, values, USER_PROFILE_ID + " = ?", arrayOf(userProfile.id));
+        db.close()
+    }
+    public fun bindUserProfile(userProfile:UserProfile){
+        val db = writableDatabase
+        val values = ContentValues().apply {
+            put(USER_PROFILE_ID,userProfile.id)
+            put(USER_ID,userProfile.userId)
+            put(PROFILE_ID,userProfile.profileId)
+            put(USER_PROFILE_NAME,userProfile.userName)
+            put(USER_PROFILE_IS_HIDE,if(userProfile.hide) 1 else 0)
+        }
+        val c = db.rawQuery("SELECT * FROM $TABLE_USER_PROFILE WHERE $USER_PROFILE_ID = '${userProfile.id}'",null)
+        if(c.count == 0)
+            db.insert(TABLE_USER_PROFILE, null, values);
+        else
+            updateUserProfile(userProfile)
         db.close()
     }
     public fun unbindUserProfile(userId:String, profileId:String){
         val db = writableDatabase
-        db.execSQL("DELETE FROM $TABLE_PSEUDONYM WHERE $USER_ID = '$userId' AND $PROFILE_ID = '$profileId'")
+        db.execSQL("DELETE FROM $TABLE_USER_PROFILE WHERE $USER_ID = '$userId' AND $PROFILE_ID = '$profileId'")
         db.close()
     }
+    //TO DO
+
 
 }
 

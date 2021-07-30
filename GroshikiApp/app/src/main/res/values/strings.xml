@@ -1,7 +1,15 @@
 <resources>
     <string name="app_name">GroshikiApp</string>
 
+    <!--Dialogs-Profile-->
+    <string name="dialog_create">Создать</string>
+    <string name="dialog_login">Войти</string>
+    <string name="dialog_dimiss">Отмена</string>
+    <string name="pseudonym_hint">имя</string>
+
     <!--Login/Register Activities-->
+    <string name="register_title">Авторизация</string>
+    <string name="auth_title">Авторизация</string>
     <string name="name_hint">имя</string>
     <string name="password_hint">пароль</string>
     <string name="confrim_password_hint">подтверждение пароля</string>
@@ -9,5 +17,10 @@
     <string name="login">войти</string>
     <string name="register">зарегистрироваться</string>
 
+    <!--Profile Activity-->
+    <string name="profiles_title">Профиль</string>
+    <string name="loginProfile">Добавить профиль</string>
+    <string name="createProfile">Создать профиль</string>
+    <string name="profile_name_hint">название профиля</string>
 
 </resources>

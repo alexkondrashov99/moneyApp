@@ -8,10 +8,10 @@ import android.widget.Button
 import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
-import com.example.groshikiapp.Firebase.FB_USERS
+
+import com.example.groshikiapp.Firebase.FDApi
 import com.example.groshikiapp.Model.User
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.database.FirebaseDatabase
 
 val mAuth = FirebaseAuth.getInstance()
 
@@ -19,6 +19,7 @@ val mAuth = FirebaseAuth.getInstance()
 
 class RegisterActivity : AppCompatActivity() {
 
+    val dbHelper:DBHelper by lazy{ DBHelper(this)}
     val btRegister: Button by lazy { findViewById(R.id.btRegister) }
     val twEmail: TextView by lazy { findViewById(R.id.etEmail) }
     val twPassword: TextView by lazy { findViewById(R.id.etPassword) }
@@ -52,7 +53,7 @@ class RegisterActivity : AppCompatActivity() {
             return false
         }
         if(confrim.isEmpty()){
-            twConfrim.error = "Введите подтверждение пароль!"
+            twConfrim.error = "Введите подтверждение пароля!"
             twConfrim.requestFocus()
             return false
         }
@@ -79,20 +80,22 @@ class RegisterActivity : AppCompatActivity() {
                 if (task.isSuccessful) {
                     val userId = FirebaseAuth.getInstance().currentUser?.uid
                     userId?.let{
-                        val user = User(id = userId,email = email)
-                        FirebaseDatabase.getInstance().getReference(FB_USERS).child(userId)
-                            .setValue(user).addOnCompleteListener{ task ->
-                                if(task.isSuccessful){
-                                    val intent = Intent(this,MainActivity::class.java).apply {
-                                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                                        addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK)
-                                    }
-                                    startActivity(intent)
+                        val user = User(it,email)
+                        FDApi.createUser(user,
+                            {
+
+                                //dbHelper.createUser(user)
+                                SetUserPreferences(this,user)
+                                val intent = Intent(this,ChooseProfileActivity::class.java).apply {
+                                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                    addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK)
                                 }
-                                else{
-                                    Toast.makeText(this, task.exception.toString(), Toast.LENGTH_LONG).show()
-                                }
-                            }
+                                startActivity(intent)
+                            },
+                            {
+                                Toast.makeText(this, it, Toast.LENGTH_LONG).show()
+                            })
+
                     }
 
                 } else {

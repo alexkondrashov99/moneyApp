@@ -8,10 +8,15 @@ import android.widget.Button
 import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
+import com.example.groshikiapp.Firebase.FDApi
+import com.example.groshikiapp.Model.User
 import com.google.firebase.auth.FirebaseAuth
+import java.util.*
 
 class LoginActivity : AppCompatActivity() {
 
+
+    val dbHelper:DBHelper by lazy{ DBHelper(this)}
     val btLogin: Button by lazy { findViewById(R.id.btLogin) }
     val twEmail: TextView by lazy { findViewById(R.id.etEmail) }
     val twPassword: TextView by lazy { findViewById(R.id.etPassword) }
@@ -23,7 +28,7 @@ class LoginActivity : AppCompatActivity() {
         setContentView(R.layout.activity_login)
 
         if(mAuth.currentUser != null){
-            val intent = Intent(this,MainActivity::class.java).apply {
+            val intent = Intent(this,ChooseProfileActivity::class.java).apply {
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK)
             }
@@ -55,7 +60,7 @@ class LoginActivity : AppCompatActivity() {
         }
     }
     fun onLoginClick(view: View) {
-        val email = twEmail.text.toString()
+        val email = twEmail.text.toString().trim().lowercase(Locale.getDefault())
         val password = twPassword.text.toString()
 
         if(email.isEmpty()){
@@ -72,11 +77,25 @@ class LoginActivity : AppCompatActivity() {
         mAuth.signInWithEmailAndPassword(email,password).addOnCompleteListener { task ->
             progressBar.visibility = View.GONE
             if (task.isSuccessful) {
-                val intent = Intent(this,MainActivity::class.java).apply {
-                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                    addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK)
-                }
-                startActivity(intent)
+                FDApi.getUserId(this,email,
+                {
+                    val user = User(it,email)
+
+                    //DELETE THIS????????
+                    //dbHelper.createUser(user)
+
+                    SetUserPreferences(this,user)
+                    val intent = Intent(this,ChooseProfileActivity::class.java).apply {
+                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK)
+                    }
+                    startActivity(intent)
+
+                },
+                {
+                    Toast.makeText(applicationContext,it,Toast.LENGTH_LONG).show()
+                })
+
             }
             else{
                 Toast.makeText(applicationContext,task.exception.toString(),Toast.LENGTH_LONG).show()

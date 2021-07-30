@@ -1,7 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <dimen name="root_padding">16dp</dimen>
+
+    <!--Dialogs-->
+    <dimen name="dialog_text_size">16sp</dimen>
+    <dimen name="dialog_button_size">20sp</dimen>
+    <dimen name="dialog_button_top_margin">8dp</dimen>
+
     <!--Login/Register Activities-->
     <dimen name="login_text_size">24sp</dimen>
-    <dimen name="login_input_margin">8dp</dimen>
+    <dimen name="login_input_margin">8sp</dimen>
+
+    <!--Profile Activity-->
+    <dimen name="item_title_text_size">36sp</dimen>
+    <dimen name="item_title_padding">8sp</dimen>
 </resources>

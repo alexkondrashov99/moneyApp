@@ -1,29 +1,27 @@
 package com.example.groshikiapp
 
-import android.content.Context
 import android.content.Intent
-import android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP
-import android.content.Intent.FLAG_ACTIVITY_NEW_TASK
 import android.os.Bundle
 import android.view.View
-import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import com.example.groshikiapp.Firebase.FB_EMAIL
-import com.example.groshikiapp.Firebase.FB_ID
-import com.example.groshikiapp.Firebase.FB_NAME
-import com.example.groshikiapp.Firebase.FB_USERS
+import com.example.groshikiapp.Firebase.FDApi
 import com.example.groshikiapp.Model.*
 import com.example.groshikiapp.Model.Transaction
-import com.google.android.gms.tasks.OnCompleteListener
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
 import java.lang.StringBuilder
 
+private val FB_USERS = "Users"
+private val FB_EMAIL = "email"
+private val FB_ID = "id"
+private val FB_NAME = "name"
+private val FB_PSEUDONYM = "pseudonym"
+
 private data class Usaer(val email:String, val password:String)
 var counter = 0
-class MainActivity : AppCompatActivity(),DatabaseDisplayer {
+class MainActivity : AppCompatActivity() {
 
     val twUserData:TextView by lazy { findViewById(R.id.twUserData) }
     val dbUserRef = FirebaseDatabase.getInstance().getReference(FB_USERS)
@@ -61,27 +59,36 @@ class MainActivity : AppCompatActivity(),DatabaseDisplayer {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        val profile = Profile("fadsgghdsgtr","Profile1")
-        val user = User("sadasdsad","em@google.com")
-        val pocket = Pocket("sadwrtg3q","pocket1",0.0,"Руб",true,"",profile.id)
-        val category = Category("sadasdasd","categoryName",true,profile.id)
+
         val dbHelper = DBHelper(this)
-//        dbHelper.createPocket(pocket)
-//        dbHelper.createTransaction(Transaction("dsavcaew",-324.0,System.currentTimeMillis(),category.id,"Я добавил тразакцию",pocket.id))
-//        dbHelper.createTransaction(Transaction("dsaasvcaew",-524.0,System.currentTimeMillis(),category.id,"Я добавил тразакцию",pocket.id))
-//        dbHelper.createTransaction(Transaction("dsavsadcaew",1324.0,System.currentTimeMillis(),category.id,"Я добавил тразакцию",pocket.id))
-//        dbHelper.createTransaction(Transaction("dsazxcvcaew",3324.0,System.currentTimeMillis(),category.id,"Я добавил тразакцию",pocket.id))
-//        dbHelper.createTransaction(Transaction("dsavsdcaew",-1524.0,System.currentTimeMillis(),category.id,"Я добавил тразакцию",pocket.id))
-//        dbHelper.createTransaction(Transaction("dsa2asvcaew",-324.0,System.currentTimeMillis(),category.id,"Я добавил тразакцию",pocket.id))
 
-        val new_pocket = dbHelper.getDataByCondition<Pocket>(TABLE_POCKET,"WHERE $POCKET_ID = '${pocket.id}'", {Pocket(it)})
-        new_pocket?.let{
-            val sb = StringBuilder().apply{
-               append("new_pocket.balance ${new_pocket.balance}${new_pocket.currency}")
-            }
-            twUserData.setText(sb.toString())
-        }
 
+        //val profile = Profile("","MyTestProfile2","simplepassword".hashCode())
+//        FbDbApi.createProfile(profile,
+//            {
+//                twUserData.setText(it)
+//                val pocket = Pocket("","MyPocket",0.0,"Руб",true,"",it)
+//                FbDbApi.createPocket(pocket,
+//                    {
+//
+//                    },
+//                    {
+//                        Toast.makeText(this, it.exception.toString(), Toast.LENGTH_LONG).show()
+//                    })
+//            },
+//            {
+//                Toast.makeText(this, it.exception.toString(), Toast.LENGTH_LONG).show()
+//            })
+        val profile = Profile("-MfU22V0U3555CJx6B_V", "MyTestProfile2",-1953097139)
+        val categoryProfit = Category("testCategory_Profit",false,profile.id)
+        val categorySpend = Category("testCategory_Spend",true,profile.id)
+
+        val user = User("OxpYCxCPhAaIQIYhAKeJy9ogdx42","poprigun4ik99@gmail.com")
+        //add user to profile
+        //add 2 categories to profile
+        //add transactions to profile
+
+        val tr = Transaction(250.0,System.currentTimeMillis(),"caId","descr","pocketId")
 
     }
 
@@ -101,14 +108,6 @@ class MainActivity : AppCompatActivity(),DatabaseDisplayer {
             addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK)
         }
         startActivity(intent)
-    }
-
-    override fun onDatabaseError(error: String) {
-        TODO("Not yet implemented")
-    }
-
-    override fun getParentContext(): Context {
-        return this
     }
 
 
